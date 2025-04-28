@@ -5,3 +5,4 @@ node_modules/
 ios/Pods/
 android/.gradle/
 android/app/build/
+node_modules/
