@@ -1,29 +1,50 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import HomeScreen from './screens/HomeScreen';
-import LoginScreen from './screens/LoginScreen';
-import DashboardScreen from './screens/DashboardScreen'; // Importez le composant mis à jour
-import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import * as Font from 'expo-font';
 
+// Import des écrans
+import HomeScreen from './screens/HomeScreen';
+import LoginScreen from './screens/LoginScreen';
+import AlertScreen from './screens/AlerteScreen'; // Nouvel import
+
 const Stack = createStackNavigator();
 
-function App() {
+export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home">
-        <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-        <Stack.Screen name="Dashboard" component={DashboardScreen} options={{ headerShown: false }}/>
+      <Stack.Navigator 
+        initialRouteName="Home"
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: '#4CAF50', // Couleur pour FarmGuard (vert)
+          },
+          headerTintColor: '#fff',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+          },
+        }}
+      >
+        <Stack.Screen 
+          name="Home" 
+          component={HomeScreen} 
+          options={{ headerShown: false }} 
+        />
+        <Stack.Screen 
+          name="Login" 
+          component={LoginScreen} 
+          options={{ title: "Connexion", headerShown: false }} // J'ai caché l'en-tête pour correspondre au design
+        />
+        <Stack.Screen 
+          name="Alert" 
+          component={AlertScreen} 
+          options={{ headerShown: false }} // Pas d'en-tête pour l'écran d'alertes
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
 }
-
-export default App;
 
 const styles = StyleSheet.create({
   container: {

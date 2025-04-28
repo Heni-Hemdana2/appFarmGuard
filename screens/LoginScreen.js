@@ -1,23 +1,33 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Animated, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, ScrollView } from 'react-native';
-import { Button } from 'react-native-elements';
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TextInput, 
+  TouchableOpacity, 
+  Alert, 
+  Animated,
+  Image,
+  KeyboardAvoidingView,
+  Platform
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
-import { FontAwesome } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
-import { Video } from 'expo-av';
+import { Ionicons } from '@expo/vector-icons';
 
 const LoginScreen = () => {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const navigation = useNavigation();
   const [pseudo, setPseudo] = useState('');
-  const [mot_de_passe, setMot_de_passe] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const navigation = useNavigation();
 
   const [loaded] = useFonts({
-    'Roboto-Bold': require('C:/Users/Heni/OneDrive/Bureau/appFarmGuard/assets/fonts/Roboto/Roboto-Bold.ttf'),
-    'Roboto-Regular': require('C:/Users/Heni/OneDrive/Bureau/appFarmGuard/assets/fonts/Roboto/Roboto-Regular.ttf'),
+    'Roboto-Bold': require('../assets/fonts/Roboto/Roboto-Bold.ttf'),
+    'Roboto-Regular': require('../assets/fonts/Roboto/Roboto-Regular.ttf'),
   });
 
   useEffect(() => {
@@ -28,63 +38,90 @@ const LoginScreen = () => {
     }).start();
   }, [fadeAnim]);
 
-
   const handleLogin = async () => {
     try {
-      if (!pseudo || !mot_de_passe) {
+      setIsLoading(true);
+      setError(null);
+      
+      if (!pseudo || !password) {
         Alert.alert('Erreur', 'Veuillez saisir un nom d\'utilisateur et un mot de passe.');
+        setIsLoading(false);
         return;
       }
   
-      const response = await fetch('http://192.168.1.12:8000/login/', {
+      // Utilisation de votre API backend avec les bons noms de champs (pseudo au lieu de username)
+      const response = await fetch('http://127.0.0.1:8000/login/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          password: mot_de_passe,
-          username: pseudo,
+          pseudo: pseudo,
+          password: password,
         }),
       });
   
       const responseText = await response.text();
-      const contentType = response.headers.get('content-type');
-  
-      console.log('Raw response text:', responseText); // Affiche le texte brut de la réponse
-      console.log('Response content type:', contentType); // Affiche le type de contenu
-  
-      if (contentType && contentType.includes('application/json')) {
-        try {
-          const responseData = JSON.parse(responseText);
-          if (!response.ok) {
-            setError(`Erreur lors de la connexion: ${responseData.detail}`);
-            throw new Error(responseData.detail || 'Erreur lors de la connexion');
-          }
-          const { access, refresh } = responseData;
-          console.log('Access token:', access);
-          console.log('Refresh token:', refresh);
-          navigation.navigate('Dashboard', { pseudo });
-        } catch (jsonError) {
-          console.error('JSON parse error:', jsonError);
-          
+      console.log('Raw response text:', responseText);
+      
+      // Vérifier si la réponse est au format JSON
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Erreur de parsing JSON:', e);
+        Alert.alert('Erreur', 'La réponse du serveur n\'est pas au format JSON attendu.');
+        setIsLoading(false);
+        return;
+      }
+      
+      if (!response.ok) {
+        // Gestion des erreurs de la réponse API
+        if (responseData.detail) {
+          setError(responseData.detail);
+        } else if (responseData.non_field_errors) {
+          setError(responseData.non_field_errors[0]);
+        } else {
+          setError('Identifiants incorrects. Veuillez réessayer.');
         }
+        setIsLoading(false);
+        return;
+      }
+      
+      // Succès de la connexion
+      if (responseData.access && responseData.refresh) {
+        console.log('Tokens reçus:', { 
+          access: responseData.access,
+          refresh: responseData.refresh 
+        });
+        
+        // Stockage des tokens (à implémenter avec AsyncStorage dans une app réelle)
+        // await AsyncStorage.setItem('access_token', responseData.access);
+        // await AsyncStorage.setItem('refresh_token', responseData.refresh);
+        
+        // Navigation vers l'écran d'alertes
+        navigation.navigate('Alert', { pseudo: pseudo });
       } else {
-        Alert.alert('La réponse du serveur n\'est pas au format JSON.');
+        setError('Format de réponse incorrect du serveur.');
       }
     } catch (error) {
-      console.error('Error during login:', error);
-      Alert.alert('Une erreur s\'est produite lors de la connexion.');
+      console.error('Erreur lors de la connexion:', error);
+      setError('Impossible de se connecter au serveur. Vérifiez votre connexion internet.');
+    } finally {
+      setIsLoading(false);
     }
-  };
-  
-  
-
-  const toggleShowPassword = () => {
-    setShowPassword(!showPassword);
   };
 
   const handleForgotPassword = () => {
     navigation.navigate('ForgotPassword');
+  };
+
+  const clearPseudo = () => {
+    setPseudo('');
+  };
+
+  const clearPassword = () => {
+    setPassword('');
   };
 
   if (!loaded) {
@@ -92,161 +129,156 @@ const LoginScreen = () => {
   }
 
   return (
-    <View style={styles.container}>
-      <Video
-        source={require('C:/Users/Heni/OneDrive/Bureau/appFarmGuard/assets/log.mp4')}
-        rate={1.0}
-        volume={1.0}
-        isMuted={true}
-        resizeMode="cover"
-        shouldPlay
-        isLooping
-        style={StyleSheet.absoluteFill}
-      />
-      <KeyboardAvoidingView style={styles.overlay} behavior="padding" enabled>
-        <ScrollView contentContainerStyle={styles.scrollViewContent}>
-          <View style={styles.contentContainer}>
-            <Text style={styles.welcomeText}>
-              WELCOME
-            </Text>
-            <Text style={styles.subtitle}>
-              LOGIN
-            </Text>
-            <Animated.View style={[styles.formContainer, { opacity: fadeAnim }]}>
-              <View style={styles.inputContainer}>
-                <FontAwesome name="user" size={24} color="#A9A9A9" style={styles.icon} />
-                <TextInput
-                  placeholder="Username"
-                  style={styles.input}
-                  placeholderTextColor="#A9A9A9"
-                  onChangeText={text => setPseudo(text)}
-                />
-              </View>
-              <View style={styles.inputContainer}>
-                <Ionicons name="lock-closed" size={24} color="#A9A9A9" style={styles.icon} />
-                <TextInput
-                  placeholder="Password"
-                  secureTextEntry={!showPassword}
-                  style={[styles.input, { paddingRight: 40 }]}
-                  placeholderTextColor="#A9A9A9"
-                  onChangeText={text => setMot_de_passe(text)}
-                />
-                <TouchableOpacity onPress={toggleShowPassword} style={styles.togglePasswordButton}>
-                  <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={24} color="black" />
-                </TouchableOpacity>
-              </View>
-              <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotPasswordButton}>
-                <Text style={styles.forgotPasswordText}>Forgot your password?</Text>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+        {/* Logo */}
+        <View style={styles.logoContainer}>
+          <Image
+            source={require('../assets/Capture d\'écran 2025-04-23 004053 (1).png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
+        </View>
+
+        {/* Form */}
+        <View style={styles.formContainer}>
+          {/* Pseudo Input */}
+          <Text style={styles.inputLabel}>User</Text>
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={styles.input}
+              placeholder="Email/Username"
+              value={pseudo}
+              onChangeText={setPseudo}
+              autoCapitalize="none"
+            />
+            {pseudo.length > 0 && (
+              <TouchableOpacity onPress={clearPseudo} style={styles.clearButton}>
+                <Ionicons name="close-circle" size={20} color="#888" />
               </TouchableOpacity>
-              {error && <Text style={{ color: 'red', marginBottom: 10 }}>{error}</Text>}
-              <View style={styles.buttonContainer}>
-                <Button
-                  title="login now"
-                  onPress={handleLogin}
-                  buttonStyle={[styles.button, { backgroundColor: '#175b27' }]}
-                  onPressIn={() => {
-                    Animated.spring(fadeAnim, {
-                      toValue: 0.8,
-                      friction: 3,
-                      useNativeDriver: true,
-                    }).start();
-                  }}
-                  onPressOut={() => {
-                    Animated.spring(fadeAnim, {
-                      toValue: 1,
-                      friction: 3,
-                      useNativeDriver: true,
-                    }).start();
-                  }}
-                />
-              </View>
-            </Animated.View>
+            )}
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </View>
+
+          {/* Password Input */}
+          <Text style={styles.inputLabel}>8 characters</Text>
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+            />
+            {password.length > 0 && (
+              <TouchableOpacity onPress={clearPassword} style={styles.clearButton}>
+                <Ionicons name="close-circle" size={20} color="#888" />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Error message */}
+          {error && <Text style={styles.errorText}>{error}</Text>}
+
+          {/* Login Button */}
+          <TouchableOpacity 
+            style={[styles.loginButton, isLoading && styles.loginButtonDisabled]} 
+            onPress={handleLogin}
+            disabled={isLoading}
+          >
+            <Text style={styles.loginButtonText}>
+              {isLoading ? 'Connexion...' : 'login'}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Forgot Password */}
+          <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotPasswordContainer}>
+            <Text style={styles.forgotPasswordText}>forgot password ? click here</Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    position: 'relative',
+    backgroundColor: 'white',
   },
-  overlay: {
+  content: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-  },
-  scrollViewContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingHorizontal: 20,
   },
-  contentContainer: {
-    width: '100%',
+  logoContainer: {
     alignItems: 'center',
+    marginBottom: 40,
   },
-  welcomeText: {
-    fontSize: 26,
-    marginBottom: 10,
-    marginTop: 30,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  subtitle: {
-    fontSize: 16,
-    marginBottom: 20,
-    color: '#dcdcdc',
+  logoImage: {
+    width: 200,
+    height: 200,
   },
   formContainer: {
-    width: '80%',
-    alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: 10,
   },
-  inputContainer: {
+  inputLabel: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 5,
+    marginLeft: 5,
+  },
+  inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 15, 
-    backgroundColor: '#f0f8f4',
-    width: '90%',
-    height: 50,
-    marginBottom: 10,
-    borderRadius: 25,
-    paddingHorizontal: 15,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    marginBottom: 20,
     position: 'relative',
-  },
-  icon: {
-    marginRight: 10,
   },
   input: {
     flex: 1,
-    height: '100%',
-    color: '#000',
+    height: 50,
+    paddingHorizontal: 15,
   },
-  togglePasswordButton: {
+  clearButton: {
     position: 'absolute',
-    right: 10,
-    top: '50%',
-    transform: [{ translateY: -12 }],
+    right: 15,
   },
-  forgotPasswordButton: {
-    alignSelf: 'flex-end',
-    marginRight: '25%',
+  loginButton: {
+    backgroundColor: '#4CAF50',
+    height: 50,
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginTop: 10,
-    marginBottom: 20,
   },
-  forgotPasswordText: {
-    color: '#175b27',
-    fontSize: 14,
-    fontWeight: 'bold',
+  loginButtonDisabled: {
+    backgroundColor: '#92d394',
   },
-  buttonContainer: {
+  loginButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: '500',
+  },
+  forgotPasswordContainer: {
+    alignItems: 'center',
     marginTop: 20,
   },
-  button: {
-    paddingHorizontal: 50,
-    paddingVertical: 10,
-    borderRadius: 25,
+  forgotPasswordText: {
+    color: '#4CAF50',
+    fontSize: 16,
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginBottom: 15,
   },
 });
 

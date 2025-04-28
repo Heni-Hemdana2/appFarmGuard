@@ -1,135 +1,133 @@
-import React, { useRef, useEffect } from 'react';//utilisés pour gérer l'état des composants et les effets secondaires.
-import { View, Text, StyleSheet, Animated, ImageBackground, Image } from 'react-native';
-import { Button } from 'react-native-elements';
-import { useNavigation } from '@react-navigation/native';//est utilisé pour naviguer entre les écrans.
-import { useFonts } from 'expo-font';//charge des polices personnalisées.
+import React, { useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, Animated, ImageBackground, Image, TouchableOpacity, Platform } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { useFonts } from 'expo-font';
 
 const HomeScreen = () => {  
-  const [loaded] = useFonts({//chargement des polices personnalisées à partir des chemins spécifiés.
-    'Roboto-Bold': require('C:/Users/Heni/OneDrive/Bureau/appFarmGuard/assets/fonts/Roboto/Roboto-Bold.ttf'),
-    'Roboto-Regular': require('C:/Users/Heni/OneDrive/Bureau/appFarmGuard/assets/fonts/Roboto/Roboto-Regular.ttf'),
+  const [loaded] = useFonts({
+    'Roboto-Bold': require('../assets/fonts/Roboto/Roboto-Bold.ttf'),
+    'Roboto-Regular': require('../assets/fonts/Roboto/Roboto-Regular.ttf'),
   });
 
-  const fadeAnim = useRef(new Animated.Value(0)).current;//est une référence pour gérer l'état de l'animation, commençant à 0
-  const navigation = useNavigation();//fournit des capacités de navigation  
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const navigation = useNavigation();
 
-  useEffect(() => {//Exécute l'effet d'animation lorsque le composant est monté.
-    Animated.timing(fadeAnim, {//Fait apparaître progressivement le composant de l'opacité 0 à 1 sur 1000 millisecondes.
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 1000,
       useNativeDriver: true,
     }).start();
+
+    // Naviguer automatiquement après 3 secondes si souhaité
+    // const timer = setTimeout(() => {
+    //   navigation.navigate('Login');
+    // }, 3000);
+    // return () => clearTimeout(timer);
   }, [fadeAnim]);
 
-//Retourne null si les polices ne sont pas chargées
   if (!loaded) {
-    return null; // Return null or a loading indicator while fonts are loading
+    return null;
   }
-//Fournit une image de fond pour tout l'écran.
-//Les conteneurs View organisent les éléments de mise en page tels que le logo, le titre et les boutons.
+
   return (
-    <ImageBackground
-      source={require('C:/Users/Heni/OneDrive/Bureau/appFarmGuard/assets/back.png')}
-      style={styles.backgroundImage}
-    >
-      <View style={styles.container}>
+    <View style={styles.container}>
+      <Animated.View 
+        style={[styles.contentContainer, { opacity: fadeAnim }]}
+      >
+        {/* Logo image (la partie graphique avec la ferme) */}
         <Image
-          source={require('C:/Users/Heni/OneDrive/Bureau/appFarmGuard/assets/logo.png')}
-          style={styles.logo}
-          
+          source={require('../assets/Capture d\'écran 2025-04-23 004053 (1).png')}
+          style={styles.logoImage}
+          resizeMode="contain"
         />
         
-        <Text style={styles.title}>WELCOME TO SFG</Text>
-
-      
-        <View style={styles.imageContainer}>
-        </View>
+        {/* Texte du logo */}
+        {/* <Text style={styles.smartFarmText}>smart farm</Text>
+        <Text style={styles.visionText}>vision</Text> */}
         
-        <View style={styles.buttonContainer}>
-          <Button
-            title="Get Started"
-            onPress={() => navigation.navigate('Login')}
-            buttonStyle={[styles.button, { backgroundColor: '#175b27' }]}
-            onPressIn={() => {
-              Animated.spring(fadeAnim, {
-                toValue: 0.8,
-                friction: 3,
-                useNativeDriver: true,
-              }).start();
-            }}
-            onPressOut={() => {
-              Animated.spring(fadeAnim, {
-                toValue: 1,
-                friction: 3,
-                useNativeDriver: true,
-              }).start();
-            }}
-          />
-        </View>
-      </View>
-    </ImageBackground>
+        {/* Bouton invisible qui couvre tout l'écran pour naviguer */}
+        <TouchableOpacity 
+          style={styles.fullScreenButton}
+          onPress={() => navigation.navigate('Login')}
+          activeOpacity={0.8}
+        >
+          {/* Bouton optionnel visible */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity 
+              style={styles.button}
+              onPress={() => navigation.navigate('Login')}
+            >
+              <Text style={styles.buttonText}>Continuer</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  backgroundImage: { //Définit l'image de fond pour couvrir tout l'écran.
+  container: {
     flex: 1,
-    resizeMode: 'cover',
-    justifyContent: 'center',
-  },
-  container: {//Centre tous les éléments dans l'écran.
-    flex: 1,
+    backgroundColor: '#2a7858', // Couleur verte comme dans l'image
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  logo: {//Styles pour l'image du logo, y compris la taille et la marge.
-
-    width: 100,
-    height: 100,
-    resizeMode: 'contain',
-    marginTop: 20,
-  },
-  titleImage: {//Gèrent la mise en page et l'apparence du titre et des images.
-    width: 250,
-    height: 100,
-    resizeMode: 'contain',
-    marginTop: '5%',
-  },
-  imageContainer: {
-    width: '80%',
-    aspectRatio: 1,
-    alignItems: 'center',
-    marginTop: '5%',
-  },
-  backgroundImageInner: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'contain',
   },
   contentContainer: {
-    marginTop: '1%',
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
+    width: '100%',
   },
-  slogan: {
-    fontFamily: 'Roboto-Bold',
-    fontSize: 24,
-    color: '#333',
+  logoImage: {
+    width: 300,
+    height: 300,
+    marginBottom: 20,
+  },
+  smartFarmText: {
+    fontFamily: 'Roboto-Regular',
+    fontSize: 40,
+    color: '#a5c3b2', // Couleur vert clair pour le texte
     textAlign: 'center',
+    letterSpacing: 1,
+  },
+  visionText: {
+    fontFamily: 'Roboto-Regular',
+    fontSize: 40,
+    color: '#a5c3b2', // Couleur vert clair pour le texte
+    textAlign: 'center',
+    letterSpacing: 1,
+    marginTop: -10, // Rapproche les deux textes
+  },
+  fullScreenButton: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingBottom: 50,
   },
   buttonContainer: {
-    marginTop: '50%',
+    width: '60%',
+    alignItems: 'center',
+    marginTop: 40,
   },
   button: {
-    paddingHorizontal: 50,
-    paddingVertical: 10,
-    borderRadius: 25,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: '#a5c3b2',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'white',
-
-  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: 'Roboto-Bold',
+  }
 });
 
 export default HomeScreen;

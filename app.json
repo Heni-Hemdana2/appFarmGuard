@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "appFarmGuard",
+    "name": "FarmGuard",
     "slug": "appFarmGuard",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -9,7 +9,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#4CAF50"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -27,7 +27,11 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font"
-    ]
+      "expo-font",
+      "expo-asset"
+    ],
+    "experiments": {
+      "newArchEnabled": true
+    }
   }
 }
