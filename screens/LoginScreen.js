@@ -14,6 +14,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Assurez-vous d'importer AsyncStorage
 
 const LoginScreen = () => {
   const [pseudo, setPseudo] = useState('');
@@ -49,8 +50,14 @@ const LoginScreen = () => {
         return;
       }
   
-      // Utilisation de votre API backend avec les bons noms de champs (pseudo au lieu de username)
-      const response = await fetch('http://127.0.0.1:8000/login/', {
+      console.log('Tentative de connexion avec:', { pseudo, password });
+      
+      // Pour un appareil réel, utilisez l'adresse IP de votre ordinateur sur le réseau local
+      // Pour un émulateur Android, utilisez 10.0.2.2 au lieu de 127.0.0.1
+      const apiUrl = 'http://127.0.0.1:8000/api/login/';
+      console.log('URL de l\'API:', apiUrl);
+  
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -95,12 +102,15 @@ const LoginScreen = () => {
           refresh: responseData.refresh 
         });
         
-        // Stockage des tokens (à implémenter avec AsyncStorage dans une app réelle)
-        // await AsyncStorage.setItem('access_token', responseData.access);
-        // await AsyncStorage.setItem('refresh_token', responseData.refresh);
+        // Stockage des tokens - DÉCOMMENTEZ CES LIGNES
+        await AsyncStorage.setItem('accessToken', responseData.access);
+        await AsyncStorage.setItem('refreshToken', responseData.refresh);
         
-        // Navigation vers l'écran d'alertes
-        navigation.navigate('Alert', { pseudo: pseudo });
+        console.log('Tokens stockés avec succès');
+        
+        // Navigation vers l'écran d'alertes - CORRECTION DU NOM DE LA ROUTE
+        console.log('Navigation vers Alert');
+        navigation.navigate('Alert');
       } else {
         setError('Format de réponse incorrect du serveur.');
       }

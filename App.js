@@ -7,7 +7,8 @@ import * as Font from 'expo-font';
 // Import des écrans
 import HomeScreen from './screens/HomeScreen';
 import LoginScreen from './screens/LoginScreen';
-import AlertScreen from './screens/AlerteScreen'; // Nouvel import
+import AlertScreen from './screens/AlerteScreen';
+import DetectionScreen from './screens/DetectionScreen'; // Nouvel import
 
 const Stack = createStackNavigator();
 
@@ -34,12 +35,20 @@ export default function App() {
         <Stack.Screen 
           name="Login" 
           component={LoginScreen} 
-          options={{ title: "Connexion", headerShown: false }} // J'ai caché l'en-tête pour correspondre au design
+          options={{ title: "Connexion", headerShown: false }}
         />
         <Stack.Screen 
           name="Alert" 
           component={AlertScreen} 
-          options={{ headerShown: false }} // Pas d'en-tête pour l'écran d'alertes
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="Detection" 
+          component={DetectionScreen} 
+          options={{ 
+            title: "Détection",
+            headerShown: false // On cache l'en-tête car on gère notre propre header dans l'écran
+          }} 
         />
       </Stack.Navigator>
     </NavigationContainer>
